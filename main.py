@@ -31,7 +31,11 @@ async def create_lead(lead: LeadIn):
     segment = classify_segment(lead.budget)
     label = offer_label(segment)
 
-    subject, body = await generate_email_draft(
+    try:
+    subject, body = await generate_email_draft(lead)
+except Exception as e:
+    subject = "Nowe zapytanie"
+    body = f"Lead zapisany, AI chwilowo niedostępne.\n\n{str(e)}"
         name=lead.name,
         email=lead.email,
         company=lead.company,
