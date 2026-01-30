@@ -6,3 +6,4 @@ httpx
 sendgrid
 openai
 python-dotenv
+email-validator
