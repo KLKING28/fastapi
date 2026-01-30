@@ -2,8 +2,8 @@ fastapi
 uvicorn[standard]
 
 openai
-
 sendgrid
 
+sqlalchemy>=2.0
 psycopg2-binary
 python-dotenv
