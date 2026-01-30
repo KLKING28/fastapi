@@ -4,6 +4,7 @@ from typing import Optional
 
 import httpx
 from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import DateTime, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
@@ -79,6 +80,21 @@ Base.metadata.create_all(bind=ENGINE)
 
 app = FastAPI(title="AI Marketing Agent")
 
+# ✅ CORS – konieczne, żeby panel (localhost:5173) mógł wołać API
+# MVP: zostawiamy localhosty. Po deployu panelu na Railway dopiszemy jego domenę.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        # jeśli chcesz, możesz chwilowo odblokować wszystko:
+        # "*",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 class LeadIn(BaseModel):
     name: str
@@ -107,7 +123,13 @@ def offer_label(segment: str) -> str:
     }.get(segment, "Nieznany segment")
 
 
-async def generate_email_draft(name: str, email: str, company: Optional[str], budget: int, need: str) -> tuple[str, str]:
+async def generate_email_draft(
+    name: str,
+    email: str,
+    company: Optional[str],
+    budget: int,
+    need: str
+) -> tuple[str, str]:
     """
     Zwraca (subject, body). Jeśli OpenAI nie działa → fallback bez wywalania API.
     """
@@ -290,7 +312,7 @@ def get_lead(lead_id: int):
 def list_leads(limit: int = 50):
     db = SessionLocal()
     try:
-        rows = db.query(Lead).order_by(Lead.id.desc()).limit(limit).all()
+        rows = db.query(Lead).order_by(Lead.created_at.desc()).limit(limit).all()
         return [
             {
                 "lead_id": r.id,
@@ -340,4 +362,8 @@ def approve_and_send(lead_id: int, x_approval_token: Optional[str] = Header(defa
 
 @app.post("/sendgrid-test")
 def sendgrid_test(to_email: EmailStr):
-    return send_via_sendgrid(str(to_email), "SendGrid test from AI Agent ✅", "Jeśli to czytasz, wysyłka działa.")
+    return send_via_sendgrid(
+        str(to_email),
+        "SendGrid test from AI Agent ✅",
+        "Jeśli to czytasz, wysyłka działa."
+    )
