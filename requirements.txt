@@ -1,7 +1,8 @@
 fastapi
-uvicorn
-sqlalchemy
+uvicorn[standard]
+sqlalchemy>=2.0
 psycopg2-binary
-python-dotenv
+httpx
 sendgrid
 openai
+python-dotenv
